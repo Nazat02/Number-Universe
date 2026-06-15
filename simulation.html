@@ -1173,8 +1173,8 @@ const odeSystems={
     step(s,x,y,z){const dt=0.007;const dx=-(y+z),dy=x+s.a*y,dz=s.b+z*(x-s.c);return[x+dx*dt,y+dy*dt,z+dz*dt];}
   },
   duffing:{
-    label:'Duffing Oscillator',alpha:1,beta:-1,delta:.3,gamma:.5,omega:1.2,
-    step(s,x,y,z){const dt=0.02;const dx=y,dy=x*(s.alpha-s.beta*x*x)-s.delta*y+s.gamma*Math.cos(s.omega*z),dz=1;return[x+dx*dt,y+dy*dt,z+dz*dt];}
+    label:'Duffing Oscillator',alpha:-1,beta:1,delta:.3,gamma:.5,omega:1.2,
+    step(s,x,y,z){const dt=0.02;const dx=y,dy=s.alpha*x-s.beta*x*x*x-s.delta*y+s.gamma*Math.cos(z),dz=s.omega*dt;return[x+dx*dt,y+dy*dt,(z+dz)%(2*Math.PI)];}
   },
   thomas:{
     label:"Thomas' Cyclically Symmetric",b:.19,
@@ -1187,13 +1187,21 @@ function buildODE(){
     ?{label:'Custom',dt:odeCustomDT,step(s,x,y,z){const dt=s.dt;const dx=safeEval3(odeCustomDX,x,y,z),dy=safeEval3(odeCustomDY,x,y,z),dz=safeEval3(odeCustomDZ,x,y,z);return[x+dx*dt,y+dy*dt,z+dz*dt];}}
     :odeSystems[odeType]||odeSystems.lorenz;
   const TRAJ=odeN;
+  const isDuffing=(!odeUseCustom&&odeType==='duffing');
   for(let t=0;t<TRAJ;t++){
-    let [x,y,z]=[Math.random()*.02-.01,Math.random()*.02-.01+0.1,Math.random()*.02+0.01];
-    const pts=[];const STEPS=8000;
+    let [x,y,z]=isDuffing
+      ?[(Math.random()-.5)*2,(Math.random()-.5)*1.5,Math.random()*Math.PI*2]
+      :[Math.random()*.02-.01,Math.random()*.02-.01+0.1,Math.random()*.02+0.01];
+    const pts=[];const STEPS=isDuffing?15000:8000;
     for(let i=0;i<STEPS;i++){
       [x,y,z]=sys.step(sys,x,y,z);
       if(!isFinite(x)||!isFinite(y)||!isFinite(z)) break;
-      if(i>200) pts.push(new THREE.Vector3(x*.15,y*.15-1,z*.15-1));
+      if(i>300){
+        const pz=isDuffing?Math.cos(z)*.8:z*.15-1;
+        const px=isDuffing?x*.8:x*.15;
+        const py=isDuffing?y*.8:y*.15-1;
+        pts.push(new THREE.Vector3(px,py,pz));
+      }
     }
     if(pts.length<2) continue;
     const geo=new THREE.BufferGeometry().setFromPoints(pts);
