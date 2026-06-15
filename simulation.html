@@ -490,6 +490,105 @@ input[type=checkbox]{
 @media(prefers-reduced-motion:reduce){
   *{transition-duration:.01ms!important}
 }
+
+/* ════ DESKTOP VISIBILITY BOOST ════ */
+@media(min-width:901px){
+  :root{
+    /* Brighter glass surfaces */
+    --glass:rgba(6,14,6,.82);
+    --glass-hi:rgba(10,20,10,.90);
+    /* Stronger borders */
+    --border:rgba(0,255,80,.14);
+    --border-hi:rgba(0,255,80,.30);
+    /* Brighter text */
+    --text:#edfeed;
+    --text2:#6ab96a;
+    --text3:#3d6e3d;
+    --muted:#3a5e3a;
+    /* Stronger accent tints */
+    --fn-dim:rgba(0,255,80,.16);
+    --cx-dim:rgba(0,255,80,.16);
+    --real-dim:rgba(0,255,80,.16);
+    --para-dim:rgba(0,255,80,.16);
+    --vec-dim:rgba(0,255,80,.16);
+    --ode-dim:rgba(0,255,80,.16);
+    --frac-dim:rgba(0,255,80,.16);
+  }
+
+  /* Topbar: crisper, more readable */
+  #topbar{
+    background:rgba(4,10,4,.88);
+    border-bottom:1px solid rgba(0,255,80,.18);
+  }
+
+  /* Panel: brighter background so content is easy to read */
+  #panel{
+    background:rgba(8,16,8,.92);
+    border-left:1px solid rgba(0,255,80,.18);
+  }
+
+  /* Panel toggle button more visible */
+  #panel-tog{
+    border-color:rgba(0,255,80,.22);
+    color:var(--text2);
+  }
+
+  /* Section labels in panel */
+  .sec-label{color:var(--text2);}
+  .sec p{color:var(--text2);}
+
+  /* Field labels */
+  .field-label{color:var(--text2);}
+
+  /* Input fields more visible */
+  input[type=text],input[type=number],select{
+    border-color:rgba(0,255,80,.22);
+    background:rgba(0,0,0,.45);
+    color:var(--text);
+  }
+
+  /* Active tab stronger glow */
+  .tab.on-fn,.tab.on-cx,.tab.on-surf,.tab.on-para,.tab.on-vec,.tab.on-ode,.tab.on-frac,.tab.on-2d{
+    border-color:rgba(0,255,80,.55);
+    box-shadow:0 0 10px rgba(0,255,80,.2);
+  }
+
+  /* Icon buttons */
+  .icon-btn{color:var(--text2);border-color:rgba(0,255,80,.16);}
+  .icon-btn.active{box-shadow:0 0 16px rgba(0,255,80,.28);}
+
+  /* HUD overlays */
+  #coords,#inspector,#slicer-hud,#time-hud{
+    background:rgba(6,14,6,.88);
+    border-color:rgba(0,255,80,.20);
+  }
+
+  /* Expression input HUD */
+  #plot2d-expr-hud{
+    background:rgba(8,18,8,.92);
+    border-color:rgba(0,255,80,.22);
+  }
+
+  /* Toast */
+  #toast{
+    background:rgba(0,255,80,.14);
+    border-color:rgba(0,255,80,.40);
+  }
+
+  /* Logo glow */
+  #logo-n svg{filter:drop-shadow(0 0 8px rgba(0,255,80,.55));}
+
+  /* List items */
+  .list-item{border-color:rgba(0,255,80,.12);}
+  .list-item.sel-fn,.list-item.sel-cx,.list-item.sel-surf,
+  .list-item.sel-para,.list-item.sel-ode,.list-item.sel-frac{
+    border-color:rgba(0,255,80,.40);
+    box-shadow:0 0 8px rgba(0,255,80,.12);
+  }
+
+  /* Slider thumb glow */
+  input[type=range]::-webkit-slider-thumb{box-shadow:0 0 8px rgba(0,255,80,.6);}
+}
 </style>
 </head>
 <body>

@@ -150,11 +150,14 @@ h1 em{color:var(--green);font-style:normal;text-shadow:0 0 48px rgba(0,255,80,.4
 .hero-stats{
   position:relative;z-index:3;
   display:flex;align-items:stretch;
+  background:#000;
   border-top:1px solid var(--gb);
+  border-bottom:1px solid var(--gb);
 }
 .hstat{
-  flex:1;padding:22px 0;text-align:center;
+  flex:1;padding:28px 0;text-align:center;
   border-right:1px solid var(--gb);
+  background:#000;
 }
 .hstat:last-child{border-right:none}
 .hstat-n{font-size:clamp(20px,4vw,40px);font-weight:700;letter-spacing:-.03em;color:var(--green)}
@@ -384,22 +387,27 @@ footer{
   h1{letter-spacing:-.03em}
   .modes-grid{grid-template-columns:1fr}
   .eq-grid{grid-template-columns:repeat(2,1fr)}
-  .hero-stats{flex-wrap:wrap}
-  .hstat{flex:0 0 33.33%;border-bottom:1px solid var(--gb)}
-  .hstat:nth-child(3){border-right:none}
-  .hstat:nth-child(4),.hstat:nth-child(5){border-bottom:none}
   footer{flex-direction:column;align-items:flex-start}
 
   /* Hero mobile fixes */
-  .hero-body{padding:60px 20px 40px;gap:0}
-  .eyebrow{font-size:8px;letter-spacing:.22em;margin-bottom:20px;gap:8px}
+  .hero-logo{margin-bottom:16px}
+  .hero-body{padding:60px 20px 20px;gap:0}
+  .eyebrow{font-size:8px;letter-spacing:.22em;margin-bottom:14px;gap:8px}
   .eyebrow-line{width:20px}
-  h1{font-size:clamp(42px,13vw,72px);line-height:.92}
-  .hero-tagline{font-size:13px;margin:20px auto 32px;padding:0 4px}
+  h1{font-size:clamp(36px,11vw,60px);line-height:.92}
+  .hero-tagline{font-size:12px;margin:12px auto 18px;padding:0 4px;line-height:1.6}
   .hero-tagline br{display:none}
-  .hero-btns{flex-direction:column;align-items:center;gap:10px;width:100%;max-width:300px}
-  .btn-p,.btn-g{width:100%;text-align:center;padding:15px 24px}
+  .hero-btns{flex-direction:column;align-items:center;gap:8px;width:100%;max-width:300px}
+  .btn-p,.btn-g{width:100%;text-align:center;padding:13px 24px;font-size:10px}
   .scroll-cue{display:none}
+
+  /* Stats bar: 2-column grid, no overlap */
+  .hero-stats{display:grid;grid-template-columns:repeat(2,1fr)}
+  .hstat{flex:unset;padding:14px 0;border-right:none;border-bottom:1px solid var(--gb)}
+  .hstat:nth-child(odd){border-right:1px solid var(--gb)}
+  .hstat:nth-child(5),.hstat:nth-child(6){border-bottom:none}
+  .hstat-n{font-size:20px}
+  .hstat-l{font-size:8px;letter-spacing:.12em}
 
   /* Section grids mobile */
   .modes-grid{grid-template-columns:1fr}
@@ -408,6 +416,75 @@ footer{
 @media(prefers-reduced-motion:reduce){
   *{transition-duration:.01ms!important;animation-duration:.01ms!important}
   .rv,.rv2,.rv3{opacity:1;transform:none}
+}
+
+/* ════ DESKTOP VISIBILITY BOOST ════ */
+@media(min-width:901px){
+  /* Boost CSS variable brightness for desktop */
+  :root{
+    --text:#edfeed;
+    --t2:#6ab96a;
+    --t3:#3d6e3d;
+    --t4:#254525;
+    --gd:rgba(0,255,80,.13);
+    --gm:rgba(0,255,80,.26);
+    --gh:rgba(0,255,80,.50);
+    --gb:rgba(0,255,80,.10);
+  }
+
+  /* Hero: lighter overlay so ASCII & bloom glow through more */
+  #hero-overlay{
+    background:radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0,0,0,.72) 0%, rgba(0,0,0,.38) 50%, rgba(0,0,0,.0) 100%);
+  }
+
+  /* ASCII background: more visible */
+  #ascii-bg{
+    opacity:.52;
+    text-shadow:0 0 10px rgba(0,255,80,.85);
+  }
+
+  /* Hero green bloom: stronger */
+  #hero::after{
+    background:radial-gradient(ellipse, rgba(0,255,80,.20) 0%, rgba(0,255,80,.09) 45%, transparent 75%);
+  }
+
+  /* Nav: crisper border */
+  nav{
+    border-bottom:1px solid rgba(0,255,80,.18);
+    background:rgba(0,0,0,.80);
+  }
+
+  /* Nav links more visible */
+  .nav-mid a{ color:var(--t2); }
+  .logo-dim{ color:var(--t2); }
+
+  /* Section backgrounds: slightly lighter for desktop contrast */
+  .mcard{ background:#080f08; }
+  .mcard:hover{ background:#0d180d; }
+
+  /* Step cards */
+  .step{ background:#040804; }
+
+  /* Hero h1 glow */
+  h1 em{ text-shadow:0 0 60px rgba(0,255,80,.6); }
+
+  /* Eyebrow line */
+  .eyebrow-line{ background:var(--t2); }
+
+  /* Stat numbers */
+  .hstat-n{ text-shadow:0 0 20px rgba(0,255,80,.5); }
+
+  /* Section divider labels */
+  .sec-label{ color:var(--t2); }
+
+  /* Feature items: border glow */
+  .fi{ border:1px solid rgba(0,255,80,.18); }
+
+  /* Scroll cue tick more visible */
+  .scroll-tick{ background:linear-gradient(var(--t2),transparent); }
+
+  /* Primary button stronger shadow */
+  .btn-p{ box-shadow:0 0 20px rgba(0,255,80,.3); }
 }
 </style>
 </head>
