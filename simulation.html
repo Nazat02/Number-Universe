@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Number Universe 3D</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  /* ── Deep Black + Green Core ── */
+  --void:#000000;
+  --glass:rgba(4,10,4,.88);
+  --glass-hi:rgba(6,14,6,.94);
+  --surface:#060e06;
+  --surface2:#0a140a;
+  --border:rgba(0,255,80,.07);
+  --border-hi:rgba(0,255,80,.16);
+
+  /* ── Single accent color ── */
+  --fn:#00ff50;
+  --fn-dim:rgba(0,255,80,.10);
+  --cx:#00ff50;
+  --cx-dim:rgba(0,255,80,.10);
+  --real:#00ff50;
+  --real-dim:rgba(0,255,80,.10);
+  --para:#00ff50;
+  --para-dim:rgba(0,255,80,.10);
+  --vec:#00ff50;
+  --vec-dim:rgba(0,255,80,.10);
+  --ode:#00ff50;
+  --ode-dim:rgba(0,255,80,.10);
+  --frac:#00ff50;
+  --frac-dim:rgba(0,255,80,.10);
+
+  /* ── Text ── */
+  --text:#d6ffd6;
+  --text2:#4d8f4d;
+  --text3:#1e3d1e;
+  --muted:#2a4a2a;
+
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Inter',sans-serif;
+  --panel-w:280px;
+  --topbar-h:52px;
+  --radius:8px;
+  --radius-sm:5px;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+
+html,body{width:100%;height:100%;background:var(--void);overflow:hidden;font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+/* ── Canvas ── */
+#renderer{position:fixed;top:0;left:0;right:0;bottom:0;transition:right .3s var(--ease)}
+body.panel-open #renderer{right:var(--panel-w)}
+
+/* ── Topbar ── */
+#topbar{
+  position:fixed;top:0;left:0;right:0;z-index:20;
+  display:flex;align-items:center;gap:12px;padding:0 16px;
+  height:var(--topbar-h);
+  background:var(--glass);
+  backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-bottom:1px solid var(--border);
+  pointer-events:all;
+}
+
+/* Logo mark */
+#topbar h1{
+  font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+  white-space:nowrap;flex-shrink:0;color:var(--text);
+  display:flex;align-items:center;gap:9px;
+}
+#logo-n{
+  width:28px;height:28px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  filter:drop-shadow(0 0 6px rgba(0,255,80,.35));
+}
+#topbar h1 .dim{color:var(--text3);font-weight:300;letter-spacing:.08em}
+
+#topbar .hint{
+  font-family:var(--mono);font-size:9.5px;color:var(--text3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;
+  letter-spacing:.02em;
+}
+
+#topbar-actions{display:flex;gap:5px;align-items:center;flex-shrink:0;margin-left:auto}
+
+/* Action buttons */
+.icon-btn{
+  width:32px;height:32px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);
+  background:transparent;color:var(--text3);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:13px;
+  transition:background .15s,border-color .15s,color .15s,transform .1s;
+  pointer-events:all;-webkit-tap-highlight-color:transparent;flex-shrink:0;
+  position:relative;
+}
+.icon-btn:hover{border-color:var(--border-hi);color:var(--text);background:rgba(255,255,255,.04)}
+.icon-btn:active{transform:scale(.93)}
+.icon-btn.active{border-color:var(--fn);color:var(--fn);background:var(--fn-dim);box-shadow:0 0 12px rgba(0,255,80,.18)}
+
+/* Divider */
+.topbar-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 2px}
+
+/* ── Tab bar ── */
+#tabs{display:flex;gap:3px;flex-shrink:0}
+.tab{
+  font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.04em;
+  padding:6px 12px;border-radius:var(--radius-sm);
+  border:1px solid transparent;
+  background:transparent;color:var(--text3);cursor:pointer;
+  transition:all .18s var(--ease);
+  white-space:nowrap;pointer-events:all;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  position:relative;
+}
+.tab:hover{color:var(--text);background:rgba(255,255,255,.04);border-color:var(--border)}
+.tab.on-fn  {color:var(--fn);background:var(--fn-dim);border-color:rgba(0,255,80,.35)}
+.tab.on-cx  {color:var(--cx);background:var(--cx-dim);border-color:rgba(0,255,80,.35)}
+.tab.on-surf{color:var(--real);background:var(--real-dim);border-color:rgba(0,255,80,.35)}
+.tab.on-para{color:var(--para);background:var(--para-dim);border-color:rgba(0,255,80,.35)}
+.tab.on-vec {color:var(--vec);background:var(--vec-dim);border-color:rgba(0,255,80,.35)}
+.tab.on-ode {color:var(--ode);background:var(--ode-dim);border-color:rgba(0,255,80,.35)}
+.tab.on-frac{color:var(--frac);background:var(--frac-dim);border-color:rgba(0,255,80,.35)}
+
+/* ── Panel toggle ── */
+#panel-toggle{
+  position:fixed;right:0;top:calc(var(--topbar-h) + 16px);
+  width:20px;height:44px;
+  background:var(--glass);
+  border:1px solid var(--border);border-right:none;
+  border-radius:6px 0 0 6px;
+  cursor:pointer;pointer-events:all;z-index:21;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text3);font-size:10px;
+  transition:color .15s,right .3s var(--ease),background .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+#panel-toggle:hover{color:var(--text);background:var(--glass-hi)}
+body.panel-open #panel-toggle{right:var(--panel-w)}
+
+/* ── Side panel ── */
+#panel{
+  position:fixed;right:0;top:var(--topbar-h);bottom:0;width:var(--panel-w);
+  background:var(--glass-hi);
+  backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;
+  pointer-events:all;z-index:20;
+  transform:translateX(100%);transition:transform .3s var(--ease);
+}
+body.panel-open #panel{transform:translateX(0)}
+#panel::-webkit-scrollbar{width:2px}
+#panel::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:1px}
+
+/* ── Panel sections ── */
+.sec{
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.sec:last-child{border-bottom:none}
+
+.sec-label{
+  font-size:9px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px;
+}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.sec p{font-size:11px;color:var(--text3);line-height:1.7;margin-bottom:2px}
+
+/* ── Form controls ── */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.field:last-child{margin-bottom:0}
+.field-label{
+  font-size:10px;font-weight:500;color:var(--text2);
+  font-family:var(--mono);letter-spacing:.03em;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.field-label .val{color:var(--fn);font-size:9.5px}
+
+input[type=text]{
+  width:100%;padding:8px 10px;
+  font-family:var(--mono);font-size:10.5px;
+  background:rgba(0,0,0,.35);
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--text);outline:none;-webkit-appearance:none;
+  transition:border-color .15s,box-shadow .15s;
+  letter-spacing:.02em;
+}
+input[type=text]:focus{
+  border-color:rgba(0,255,80,.45);
+  box-shadow:0 0 0 3px rgba(0,255,80,.08);
+}
+input[type=text]::placeholder{color:var(--text3)}
+
+input[type=range]{
+  width:100%;cursor:pointer;height:16px;
+  -webkit-appearance:none;appearance:none;background:transparent;
+}
+input[type=range]::-webkit-slider-runnable-track{
+  height:2px;border-radius:1px;
+  background:linear-gradient(to right,var(--fn) var(--pct,50%),var(--border-hi) var(--pct,50%));
+}
+input[type=range]::-moz-range-track{height:2px;border-radius:1px;background:var(--border-hi)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:var(--text);border:2px solid var(--fn);
+  margin-top:-6px;cursor:pointer;
+  box-shadow:0 0 6px rgba(0,255,80,.45);
+  transition:transform .1s,box-shadow .1s;
+}
+input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15);box-shadow:0 0 10px rgba(0,255,80,.7)}
+input[type=range]::-moz-range-thumb{
+  width:14px;height:14px;border-radius:50%;background:var(--text);
+  border:2px solid var(--fn);cursor:pointer;box-shadow:0 0 6px rgba(0,255,80,.45);
+}
+
+input[type=checkbox]{
+  width:14px;height:14px;cursor:pointer;accent-color:var(--fn);flex-shrink:0;
+}
+
+/* ── Chips ── */
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.chip{
+  font-family:var(--mono);font-size:9.5px;font-weight:500;
+  padding:4px 9px;border-radius:20px;cursor:pointer;
+  border:1px solid var(--border);color:var(--text3);
+  transition:all .15s var(--ease);
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  letter-spacing:.02em;white-space:nowrap;
+}
+.chip:hover{border-color:var(--border-hi);color:var(--text);background:rgba(255,255,255,.04)}
+.chip.active{border-color:var(--fn);color:var(--fn);background:var(--fn-dim);box-shadow:0 0 8px rgba(0,255,80,.15)}
+
+/* ── List items ── */
+.list-item{
+  padding:8px 11px;margin-bottom:3px;border-radius:var(--radius-sm);
+  cursor:pointer;font-size:11px;font-weight:400;
+  border:1px solid transparent;color:var(--text3);
+  background:transparent;transition:all .15s var(--ease);
+  -webkit-tap-highlight-color:transparent;
+  display:flex;align-items:center;gap:8px;
+  letter-spacing:.01em;
+}
+.list-item::before{
+  content:'';width:4px;height:4px;border-radius:50%;
+  background:currentColor;opacity:.4;flex-shrink:0;
+}
+.list-item:hover{color:var(--text);background:rgba(255,255,255,.04);border-color:var(--border)}
+.list-item.sel-fn  {color:var(--fn);  background:var(--fn-dim);  border-color:rgba(0,255,80,.25)}
+.list-item.sel-cx  {color:var(--cx);  background:var(--cx-dim);  border-color:rgba(0,255,80,.25)}
+.list-item.sel-surf{color:var(--real);background:var(--real-dim);border-color:rgba(0,255,80,.25)}
+.list-item.sel-para{color:var(--para);background:var(--para-dim);border-color:rgba(0,255,80,.25)}
+.list-item.sel-ode {color:var(--ode); background:var(--ode-dim); border-color:rgba(0,255,80,.25)}
+.list-item.sel-frac{color:var(--frac);background:var(--frac-dim);border-color:rgba(0,255,80,.25)}
+.list-item.sel-cx::before,.list-item.sel-fn::before,
+.list-item.sel-surf::before,
+.list-item.sel-para::before,.list-item.sel-ode::before,.list-item.sel-frac::before{opacity:1}
+
+/* ── Swatches ── */
+.theme-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:2px}
+.swatch{
+  width:24px;height:24px;border-radius:6px;cursor:pointer;
+  border:2px solid transparent;
+  transition:border-color .15s,transform .1s;
+  outline:none;
+}
+.swatch:hover{transform:scale(1.1)}
+.swatch.active{border-color:var(--text);box-shadow:0 0 0 1px rgba(255,255,255,.1)}
+
+/* ── History ── */
+.hist-item{
+  display:flex;align-items:center;gap:9px;padding:6px 9px;
+  border-radius:var(--radius-sm);cursor:pointer;
+  font-family:var(--mono);font-size:9.5px;
+  color:var(--text3);border:1px solid transparent;
+  transition:all .15s;margin-bottom:3px;letter-spacing:.01em;
+}
+.hist-item:hover{border-color:var(--border);color:var(--text);background:rgba(255,255,255,.03)}
+.hist-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;opacity:.8}
+
+/* ── HUD overlays ── */
+.hud-glass{
+  background:var(--glass);
+  backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%);
+  border:1px solid var(--border);
+}
+.lbl{color:var(--text3);font-size:9px;letter-spacing:.08em;text-transform:uppercase;margin-right:4px}
+
+#coords{
+  position:fixed;left:14px;bottom:16px;
+  font-family:var(--mono);font-size:10px;line-height:2;
+  padding:9px 13px;pointer-events:none;z-index:15;
+  border-radius:var(--radius);
+  transition:bottom .3s var(--ease),opacity .2s;
+}
+#coords.empty{opacity:.3}
+
+#inspector{
+  position:fixed;pointer-events:none;z-index:30;
+  border-radius:var(--radius);
+  padding:10px 14px;font-family:var(--mono);font-size:9.5px;line-height:2.1;
+  opacity:0;transition:opacity .15s;white-space:nowrap;
+}
+#inspector.visible{opacity:1}
+
+/* ── Slicer HUD ── */
+#slicer-hud{
+  position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
+  border-radius:var(--radius);
+  padding:8px 16px;display:none;align-items:center;gap:12px;
+  pointer-events:all;z-index:15;font-size:10.5px;
+  color:var(--text2);font-family:var(--mono);
+}
+#slicer-hud.show{display:flex}
+#slicer-hud input[type=range]{width:130px;margin:0}
+#slicer-hud .slicer-lbl{color:var(--text3);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase}
+#slicer-val{color:var(--fn);min-width:36px;font-size:10px}
+
+/* ── Toast ── */
+#toast{
+  position:fixed;bottom:60px;left:50%;transform:translateX(-50%) translateY(12px);
+  background:rgba(0,255,80,.08);border:1px solid rgba(0,255,80,.3);
+  border-radius:var(--radius);
+  padding:8px 16px;font-size:10.5px;font-family:var(--mono);color:var(--fn);
+  opacity:0;transition:opacity .22s,transform .22s var(--ease);
+  pointer-events:none;z-index:50;white-space:nowrap;letter-spacing:.03em;
+  box-shadow:0 4px 24px rgba(0,255,80,.12);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── Time HUD ── */
+#time-hud{
+  position:fixed;left:14px;top:calc(var(--topbar-h) + 12px);
+  display:none;align-items:center;gap:10px;
+  border-radius:var(--radius);padding:7px 12px;
+  pointer-events:all;z-index:15;
+}
+#time-hud.show{display:flex}
+#time-hud input[type=range]{width:100px;margin:0}
+#time-hud .t-val{font-family:var(--mono);font-size:10px;color:var(--fn);min-width:48px;letter-spacing:.03em}
+
+.play-btn{
+  width:26px;height:26px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);
+  background:transparent;color:var(--fn);cursor:pointer;font-size:11px;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,border-color .15s,transform .1s;
+  -webkit-tap-highlight-color:transparent;flex-shrink:0;
+}
+.play-btn:hover{background:var(--fn-dim);border-color:rgba(0,255,80,.45)}
+.play-btn:active{transform:scale(.9)}
+
+/* ── Eq display ── */
+.eq-block{
+  font-family:var(--mono);font-size:9.5px;line-height:2;
+  color:var(--text3);white-space:pre;letter-spacing:.02em;
+  background:rgba(0,0,0,.2);border-radius:var(--radius-sm);
+  padding:8px 10px;border-left:2px solid var(--border-hi);
+}
+
+/* ── Checkbox row ── */
+.check-row{
+  display:flex;align-items:center;gap:8px;
+  font-size:10.5px;color:var(--text2);cursor:pointer;
+  padding:2px 0;
+}
+.check-row span{font-family:var(--mono);font-size:10px;letter-spacing:.02em}
+
+/* ── Legend ── */
+.legend{font-size:9.5px;font-family:var(--mono);line-height:2.2;color:var(--text3);letter-spacing:.02em}
+.legend-dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle}
+
+/* ── Mobile ── */
+@media(max-width:640px){
+  :root{--topbar-h:48px}
+  #topbar h1{font-size:10px;letter-spacing:.14em}
+  #topbar .hint{display:none}
+  #tabs{
+    position:fixed;left:0;right:0;top:var(--topbar-h);z-index:19;
+    overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+    background:var(--glass);border-bottom:1px solid var(--border);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    padding:7px 10px;gap:4px;flex-shrink:initial;margin-left:0;
+  }
+  #tabs::-webkit-scrollbar{display:none}
+  .tab{font-size:10px;padding:5px 11px;flex-shrink:0}
+  #topbar-actions{gap:4px}
+  .icon-btn{width:30px;height:30px;font-size:12px}
+  #panel{
+    top:auto;bottom:0;left:0;right:0;width:100%;max-height:60vh;
+    border-left:none;border-top:1px solid var(--border);
+    border-radius:16px 16px 0 0;
+    transform:translateY(100%);transition:transform .3s var(--ease);
+  }
+  body.panel-open #panel{transform:translateY(0)}
+  body.panel-open #renderer{right:0}
+  #panel::before{
+    content:'';display:block;width:32px;height:3px;border-radius:2px;
+    background:var(--border-hi);margin:11px auto 5px;flex-shrink:0;
+  }
+  #panel-toggle{
+    right:14px;top:auto;bottom:16px;width:46px;height:46px;
+    border-radius:50%;border:1px solid var(--border);border-right:1px solid var(--border);
+    font-size:16px;transition:color .15s,bottom .3s var(--ease);
+    box-shadow:0 4px 20px rgba(0,0,0,.5);
+  }
+  body.panel-open #panel-toggle{right:14px;bottom:calc(60vh + 16px)}
+  #coords{left:10px;bottom:70px;font-size:9.5px;padding:6px 10px}
+  body.panel-open #coords{bottom:calc(60vh + 12px)}
+  #slicer-hud{bottom:70px}
+  #time-hud{top:calc(var(--topbar-h) + 52px)}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div id="renderer"></div>
+
+<div id="topbar">
+  <h1>
+    <span id="logo-n">
+      <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="logo-glow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="2.2" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <linearGradient id="logo-hex-grad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#00ff50" stop-opacity=".95"/>
+            <stop offset="100%" stop-color="#00cc40" stop-opacity=".6"/>
+          </linearGradient>
+          <linearGradient id="logo-hex-fill" x1="32" y1="5" x2="32" y2="59" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#00ff50" stop-opacity=".07"/>
+            <stop offset="100%" stop-color="#00ff50" stop-opacity=".02"/>
+          </linearGradient>
+        </defs>
+        <polygon points="32,5 55,18.5 55,45.5 32,59 9,45.5 9,18.5"
+          stroke="url(#logo-hex-grad)" stroke-width="1.4" fill="url(#logo-hex-fill)" filter="url(#logo-glow)"/>
+        <polygon points="32,13 48,22.5 48,41.5 32,51 16,41.5 16,22.5"
+          stroke="rgba(0,255,80,.12)" stroke-width=".7" fill="none"/>
+        <path d="M21 44 L21 20 L43 44 L43 20" stroke="#00ff50" stroke-width="2.6"
+          stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#logo-glow)"/>
+      </svg>
+    </span>
+    Number Universe <span class="dim">3D</span>
+  </h1>
+  <span class="hint">Drag · Scroll zoom · Right-drag pan</span>
+  <div id="topbar-actions">
+    <button class="icon-btn" id="btn-time"   title="Animate t" onclick="toggleTimeHud()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+    </button>
+    <div class="topbar-sep"></div>
+    <button class="icon-btn" id="btn-slicer" title="Cross-section" onclick="toggleSlicer()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+      </svg>
+    </button>
+    <button class="icon-btn" id="btn-shot"   title="Screenshot" onclick="takeShot()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+    </button>
+    <button class="icon-btn" id="btn-share"  title="Share URL" onclick="copyShareURL()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="18" cy="5" r="3"/>
+        <circle cx="6" cy="12" r="3"/>
+        <circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+    </button>
+  </div>
+  <div id="tabs">
+    <button class="tab" id="tab-fn"   onclick="setMode('fn')">f(x,y)</button>
+    <button class="tab" id="tab-cx"   onclick="setMode('cx')">ℂ Complex</button>
+    <button class="tab" id="tab-surf" onclick="setMode('surf')">Parametric</button>
+    <button class="tab" id="tab-para" onclick="setMode('para')">Curves</button>
+    <button class="tab" id="tab-vec"  onclick="setMode('vec')">Vector Field</button>
+    <button class="tab" id="tab-ode"  onclick="setMode('ode')">ODE</button>
+    <button class="tab" id="tab-frac" onclick="setMode('frac')">Fractal</button>
+  </div>
+</div>
+
+<div id="panel"></div>
+<button id="panel-toggle" title="Toggle panel" onclick="togglePanel()">‹</button>
+
+<div id="coords" class="hud-glass empty">—</div>
+<div id="inspector" class="hud-glass"></div>
+
+<div id="slicer-hud" class="hud-glass">
+  <span class="slicer-lbl">Slice Y</span>
+  <input type="range" id="slicer-y" min="-3" max="3" step="0.05" value="0" oninput="updateSlicer(+this.value)">
+  <span id="slicer-val">0.00</span>
+</div>
+
+<div id="time-hud" class="hud-glass">
+  <button class="play-btn" id="play-btn" onclick="togglePlay()">
+    <svg id="play-icon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    <svg id="pause-icon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+  </button>
+  <input type="range" id="time-slider" min="0" max="6.28" step="0.01" value="0" oninput="setTime(+this.value)">
+  <span class="t-val" id="t-val">t=0.00</span>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════════
+//  Bootstrap
+// ══════════════════════════════════════════════════════════
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true, preserveDrawingBuffer:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor(0x000000, 1);
+const rendEl = document.getElementById('renderer');
+rendEl.appendChild(renderer.domElement);
+renderer.domElement.style.cssText = 'position:fixed;inset:0;width:100%;height:100%';
+
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, 1, 0.01, 2000);
+camera.position.set(4,3,6); camera.lookAt(0,0,0);
+
+scene.add(new THREE.AmbientLight(0xffffff,.18));
+const dLight = new THREE.DirectionalLight(0xffffff,.6);
+dLight.position.set(5,10,5); scene.add(dLight);
+const pLight = new THREE.PointLight(0x00ff50,1.0,30);
+pLight.position.set(-3,4,-3); scene.add(pLight);
+
+// ── Orbit ──
+let orbit = { theta:Math.PI/5, phi:Math.PI/3.5, r:9, tx:0, ty:0, tz:0, dragging:false, rDragging:false, lx:0, ly:0 };
+renderer.domElement.addEventListener('mousedown', e=>{
+  if(e.button===2) orbit.rDragging=true; else orbit.dragging=true;
+  orbit.lx=e.clientX; orbit.ly=e.clientY; orbit._dragMoved=false;
+});
+renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
+window.addEventListener('mouseup',()=>{orbit.dragging=false;orbit.rDragging=false;});
+window.addEventListener('mousemove',e=>{
+  const dx=e.clientX-orbit.lx, dy=e.clientY-orbit.ly;
+  orbit.lx=e.clientX; orbit.ly=e.clientY;
+  if(orbit.dragging){orbit.theta-=dx*.006;orbit.phi=Math.max(.1,Math.min(Math.PI-.1,orbit.phi+dy*.006));}
+  if(orbit.rDragging){orbit.tx-=dx*.008;orbit.ty+=dy*.008;}
+  if(orbit.dragging||orbit.rDragging) orbit._dragMoved=true;
+  updateMouse(e.clientX,e.clientY);
+});
+renderer.domElement.addEventListener('wheel',e=>{
+  orbit.r=Math.max(.5,Math.min(40,orbit.r+e.deltaY*.012));
+},{passive:true});
+
+let tPrev=null,tPinchDist=null;
+renderer.domElement.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  orbit.dragging=true;
+  if(e.touches.length===1){tPrev=e.touches[0];tPinchDist=null;}
+  if(e.touches.length===2){tPrev=null;const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;tPinchDist=Math.hypot(dx,dy);}
+},{passive:false});
+renderer.domElement.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(e.touches.length===1&&tPrev){const dx=e.touches[0].clientX-tPrev.clientX,dy=e.touches[0].clientY-tPrev.clientY;orbit.theta-=dx*.006;orbit.phi=Math.max(.1,Math.min(Math.PI-.1,orbit.phi+dy*.006));tPrev=e.touches[0];}
+  if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;const dist=Math.hypot(dx,dy);if(tPinchDist!==null)orbit.r=Math.max(.5,Math.min(40,orbit.r-(dist-tPinchDist)*.03));tPinchDist=dist;const mx=(e.touches[0].clientX+e.touches[1].clientX)/2,my=(e.touches[0].clientY+e.touches[1].clientY)/2;if(tPrev&&tPrev.panX!==undefined){orbit.tx-=(mx-tPrev.panX)*.008;orbit.ty+=(my-tPrev.panY)*.008;}tPrev={panX:mx,panY:my};}
+},{passive:false});
+renderer.domElement.addEventListener('touchend',e=>{
+  if(e.touches.length===0){tPrev=null;tPinchDist=null;orbit.dragging=false;}
+  if(e.touches.length===1){tPrev=e.touches[0];tPinchDist=null;}
+});
+// click for inspector
+renderer.domElement.addEventListener('click',e=>{if(!orbit._dragMoved)showInspector(e.clientX,e.clientY);orbit._dragMoved=false;});
+
+function updateCamera(){
+  const x=orbit.r*Math.sin(orbit.phi)*Math.sin(orbit.theta);
+  const y=orbit.r*Math.cos(orbit.phi);
+  const z=orbit.r*Math.sin(orbit.phi)*Math.cos(orbit.theta);
+  camera.position.set(x+orbit.tx,y+orbit.ty,z);
+  camera.lookAt(orbit.tx,orbit.ty,orbit.tz);
+}
+
+// ── Axes & Grid ──
+function makeAxes(size=5){
+  const g=new THREE.Group();
+  [[size,0,0,'#00ff50',.5],[-size,0,0,'#00ff50',.15],[0,size,0,'#00ff50',1],[0,-size,0,'#00ff50',.2],[0,0,size,'#00ff50',.5],[0,0,-size,'#00ff50',.15]].forEach(([x,y,z,col,op])=>{
+    const geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(x,y,z)]);
+    g.add(new THREE.Line(geo,new THREE.LineBasicMaterial({color:col,transparent:op<1,opacity:op})));
+  });
+  return g;
+}
+function makeGrid(size=5,divs=20,color='#0a200a'){return new THREE.GridHelper(size*2,divs,color,color);}
+
+// ── Colour helpers ──
+function hsvToRgb(h,s,v){
+  h=h%1;if(h<0)h+=1;
+  const i=Math.floor(h*6),f=h*6-i,p=v*(1-s),q=v*(1-f*s),t=v*(1-(1-f)*s);
+  const c=[[v,t,p],[q,v,p],[p,v,t],[p,q,v],[t,p,v],[v,p,q]][i%6];
+  return new THREE.Color(c[0],c[1],c[2]);
+}
+function heightColor(val,min,max,_accent){
+  const t=(val-min)/(max-min||1);
+  return hsvToRgb(graphHue/360, 0.65+t*0.3, 0.25+t*0.72);
+}
+
+// ── Color themes ──
+// single green theme — no switcher needed
+let activeTheme = 'matrix';
+function applyTheme(name){}
+
+// ── Safe eval ──
+function safeEval2(expr,x,y,t=0){try{const v=new Function('x','y','t','re','im',`with(Math){return ${expr}}`)(x,y,t,x,y);return isFinite(v)?v:0;}catch{return 0;}}
+function safeEval1(expr,t){try{const v=new Function('t',`with(Math){return ${expr}}`)(t);return isFinite(v)?v:0;}catch{return 0;}}
+function safeEval3(expr,x,y,z){try{const v=new Function('x','y','z',`with(Math){return ${expr}}`)(x,y,z);return isFinite(v)?v:0;}catch{return 0;}}
+function safeEval2uv(expr,u,v){try{const r=new Function('u','v',`with(Math){return ${expr}}`)(u,v);return isFinite(r)?r:0;}catch{return 0;}}
+
+// ── Mode state ──
+let mode = 'fn';
+let currentObjs = [];
+function clearScene(){currentObjs.forEach(o=>{scene.remove(o);if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});currentObjs=[];}
+function addObj(o){scene.add(o);currentObjs.push(o);return o;}
+
+let fnExpr='sin(sqrt(x*x+y*y))',fnRes=60,fnRange=4,fnWireframe=false;
+let cxFnExpr='z*z',cxRes=50,cxCustomExpr='',cxUseCustom=false;
+let surfType='torus',surfParam={R:1.5,r:.5,res:50};
+let surfCustomX='(2+0.5*cos(v*PI*2))*cos(u*PI*2)',surfCustomY='0.5*sin(v*PI*2)',surfCustomZ='(2+0.5*cos(v*PI*2))*sin(u*PI*2)',surfUseCustom=false;
+let curveType='helix';
+let curveCustomX='cos(8*t)*2',curveCustomY='t*3-PI',curveCustomZ='sin(8*t)*2',curveUseCustom=false;
+let vecExprX='y',vecExprY='-x',vecExprZ='0',vecRes=8;
+let odeType='lorenz',odeN=15;
+let odeCustomDX='10*(y-x)',odeCustomDY='x*(28-z)-y',odeCustomDZ='x*y-(8/3)*z',odeCustomDT=0.005,odeUseCustom=false;
+let fracType='mandelbrot',fracIter=80;
+let colorAccent='teal';
+let graphHue=140; // 0-360, default green
+let timeVal=0,timePlaying=false;
+
+// Formula history
+let formulaHistory = (()=>{try{return JSON.parse(localStorage.getItem('nu3d-hist')||'[]');}catch(e){return [];}})();
+function pushHistory(expr){
+  if(!expr||formulaHistory[0]===expr) return;
+  formulaHistory = [expr,...formulaHistory.filter(h=>h!==expr)].slice(0,8);
+  try{localStorage.setItem('nu3d-hist',JSON.stringify(formulaHistory));}catch(e){}
+  refreshHistoryUI();
+}
+function refreshHistoryUI(){
+  const el=document.getElementById('hist-list');
+  if(!el) return;
+  el.innerHTML = formulaHistory.map((h,i)=>`
+    <div class="hist-item" data-hist-idx="${i}">
+      <div class="hist-dot" style="background:${hsvToRgb(i/8,.7,.8).getStyle()}"></div>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h}</span>
+    </div>`).join('')||'<div style="font-size:10px;color:var(--muted);padding:4px 0">No history yet</div>';
+}
+document.addEventListener('click',e=>{
+  const item=e.target.closest('[data-hist-idx]');
+  if(item) loadHistory(formulaHistory[+item.dataset.histIdx]);
+});
+function loadHistory(h){fnExpr=h;const inp=document.getElementById('fnInp');if(inp)inp.value=h;if(mode!=='fn')setMode('fn');else rebuild();}
+
+// ── Slicer plane ──
+let slicerEnabled=false,slicerY=0,slicerMesh=null;
+function toggleSlicer(){
+  slicerEnabled=!slicerEnabled;
+  document.getElementById('btn-slicer').classList.toggle('active',slicerEnabled);
+  document.getElementById('slicer-hud').classList.toggle('show',slicerEnabled);
+  if(slicerMesh){scene.remove(slicerMesh);if(slicerMesh.userData.edgeLine)scene.remove(slicerMesh.userData.edgeLine);slicerMesh=null;}
+  if(slicerEnabled) buildSlicerPlane();
+}
+function buildSlicerPlane(){
+  if(slicerMesh){
+    scene.remove(slicerMesh);slicerMesh.geometry.dispose();slicerMesh.material.dispose();
+    if(slicerMesh.userData.edgeLine){const el=slicerMesh.userData.edgeLine;scene.remove(el);el.geometry.dispose();el.material.dispose();}
+  }
+  const geo=new THREE.PlaneGeometry(20,20);
+  const mat=new THREE.MeshBasicMaterial({color:new THREE.Color().setHSL(graphHue/360,.8,.4),transparent:true,opacity:.12,side:THREE.DoubleSide});
+  slicerMesh=new THREE.Mesh(geo,mat);
+  slicerMesh.rotation.x=-Math.PI/2;
+  slicerMesh.position.y=slicerY;
+  scene.add(slicerMesh);
+  // Edge line
+  const pts=[new THREE.Vector3(-10,0,0),new THREE.Vector3(10,0,0)];
+  const edgeGeo=new THREE.BufferGeometry().setFromPoints(pts);
+  const edgeLine=new THREE.Line(edgeGeo,new THREE.LineBasicMaterial({color:new THREE.Color().setHSL(graphHue/360,.9,.5),transparent:true,opacity:.5}));
+  scene.add(edgeLine);
+  slicerMesh.userData.edgeLine=edgeLine;
+}
+function updateSlicer(y){
+  slicerY=y;
+  document.getElementById('slicer-val').textContent=y.toFixed(2);
+  if(slicerMesh){slicerMesh.position.y=y;if(slicerMesh.userData.edgeLine)slicerMesh.userData.edgeLine.position.y=y;}
+  // show intersection coords
+  const el=document.getElementById('coords');
+  el.innerHTML=`<span class="lbl">slice Y</span> ${y.toFixed(3)}`;
+}
+
+// ── Time ──
+function toggleTimeHud(){
+  const h=document.getElementById('time-hud');
+  const on=!h.classList.contains('show');
+  h.classList.toggle('show',on);
+  document.getElementById('btn-time').classList.toggle('active',on);
+  if(!on){timePlaying=false;document.getElementById('play-icon').style.display='';document.getElementById('pause-icon').style.display='none';}
+}
+function setTime(v){timeVal=v;document.getElementById('t-val').textContent='t='+v.toFixed(2);if(mode==='fn')buildFnSurface();}
+function togglePlay(){
+  timePlaying=!timePlaying;
+  document.getElementById('play-icon').style.display=timePlaying?'none':'';
+  document.getElementById('pause-icon').style.display=timePlaying?'':'none';
+}
+
+// ── Screenshot ──
+function takeShot(){
+  renderer.render(scene,camera);
+  const url=renderer.domElement.toDataURL('image/png');
+  const a=document.createElement('a');
+  a.href=url;a.download='number-universe-3d.png';a.click();
+  toast('Screenshot saved!');
+}
+
+// ── Share URL ──
+function copyShareURL(){
+  const params={mode};
+  if(mode==='fn') params.expr=fnExpr;
+  if(mode==='cx') params.cx=cxFnExpr;
+  if(mode==='surf') params.surf=surfType;
+  if(mode==='para') params.para=curveType;
+  if(mode==='ode')  params.ode=odeType;
+  if(mode==='frac') params.frac=fracType;
+  const url=location.href.split('?')[0]+'?'+new URLSearchParams(params);
+  navigator.clipboard.writeText(url).then(()=>toast('URL copied!')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=url;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('URL copied!');
+  });
+}
+function loadFromURL(){
+  const p=new URLSearchParams(location.search);
+  if(p.get('theme')) applyTheme(p.get('theme'));
+  const m=p.get('mode');
+  if(m) {
+    if(p.get('expr')) fnExpr=p.get('expr');
+    if(p.get('cx'))   cxFnExpr=p.get('cx');
+    if(p.get('surf')) surfType=p.get('surf');
+    if(p.get('para')) curveType=p.get('para');
+    if(p.get('ode'))  odeType=p.get('ode');
+    if(p.get('frac')) fracType=p.get('frac');
+    setMode(m);
+  }
+}
+
+// ── Toast ──
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2000);
+}
+
+// ══════════════════════════════════════════════════════════
+//  MODE: f(x,y) Surface
+// ══════════════════════════════════════════════════════════
+function buildFnSurface(){
+  clearScene();
+  addObj(makeAxes(fnRange+1));addObj(makeGrid(fnRange+1,20));
+  const res=fnRes,r=fnRange;
+  const vals=[]; let min=Infinity,max=-Infinity;
+  for(let i=0;i<=res;i++) for(let j=0;j<=res;j++){
+    const x=-r+2*r*(i/res),y=-r+2*r*(j/res);
+    const z=safeEval2(fnExpr,x,y,timeVal);
+    const v=isFinite(z)?Math.max(-r*1.5,Math.min(r*1.5,z)):0;
+    vals.push(v);min=Math.min(min,v);max=Math.max(max,v);
+  }
+  const verts=[],cols=[],idxs=[];
+  for(let i=0;i<=res;i++) for(let j=0;j<=res;j++){
+    const x=-r+2*r*(i/res),y=-r+2*r*(j/res),z=vals[i*(res+1)+j];
+    verts.push(x,z,y);
+    const c=heightColor(z,min,max,colorAccent);cols.push(c.r,c.g,c.b);
+  }
+  for(let i=0;i<res;i++) for(let j=0;j<res;j++){const a=i*(res+1)+j,b=a+1,c=a+(res+1),d=c+1;idxs.push(a,c,b,b,c,d);}
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+  geo.setIndex(idxs);geo.computeVertexNormals();
+  const mat=new THREE.MeshPhongMaterial({vertexColors:true,side:THREE.DoubleSide,shininess:80,specular:0x223344,wireframe:fnWireframe,transparent:true,opacity:fnWireframe?1:.92});
+  _fnSurfMesh=addObj(new THREE.Mesh(geo,mat));
+  if(!fnWireframe) addObj(new THREE.Mesh(geo.clone(),new THREE.MeshBasicMaterial({color:0x1a2a3a,wireframe:true,transparent:true,opacity:.08})));
+}
+
+// In-place position update for time animation (avoids full rebuild at 60fps)
+let _fnSurfMesh=null;
+function updateFnSurfacePositions(){
+  if(!_fnSurfMesh){buildFnSurface();return;}
+  const pos=_fnSurfMesh.geometry.attributes.position;
+  const col=_fnSurfMesh.geometry.attributes.color;
+  const res=fnRes,r=fnRange;
+  let min=Infinity,max=-Infinity;
+  const vals=[];
+  for(let i=0;i<=res;i++) for(let j=0;j<=res;j++){
+    const x=-r+2*r*(i/res),y=-r+2*r*(j/res);
+    const z=safeEval2(fnExpr,x,y,timeVal);
+    const v=isFinite(z)?Math.max(-r*1.5,Math.min(r*1.5,z)):0;
+    vals.push(v);min=Math.min(min,v);max=Math.max(max,v);
+  }
+  let idx=0;
+  for(let i=0;i<=res;i++) for(let j=0;j<=res;j++){
+    const x=-r+2*r*(i/res),y=-r+2*r*(j/res),z=vals[idx];
+    pos.setXYZ(idx,x,z,y);
+    const c=heightColor(z,min,max,colorAccent);col.setXYZ(idx,c.r,c.g,c.b);
+    idx++;
+  }
+  pos.needsUpdate=true;col.needsUpdate=true;
+  _fnSurfMesh.geometry.computeVertexNormals();
+}
+
+
+// ══════════════════════════════════════════════════════════
+function complexEval(expr,re,im){
+  const z={re,im};
+  try{
+    if(expr==='z*z')     return cmul(z,z);
+    if(expr==='z*z*z')   return cmul(cmul(z,z),z);
+    if(expr==='z*z-1')   return{re:z.re*z.re-z.im*z.im-1,im:2*z.re*z.im};
+    if(expr==='sin(z)')  return csin(z);
+    if(expr==='cos(z)')  return ccos(z);
+    if(expr==='exp(z)')  return cexp(z);
+    if(expr==='1/z')     return cinv(z);
+    if(expr==='z^3-1')   return{re:z.re*z.re*z.re-3*z.re*z.im*z.im-1,im:3*z.re*z.re*z.im-z.im*z.im*z.im};
+    if(expr==='tan(z)')  {const s=csin(z),c=ccos(z),d=c.re*c.re+c.im*c.im||1e-10;return{re:(s.re*c.re+s.im*c.im)/d,im:(s.im*c.re-s.re*c.im)/d};}
+    if(expr==='z^4-1')   {const z2=cmul(z,z);return{re:z2.re*z2.re-z2.im*z2.im-1,im:2*z2.re*z2.im};}
+    // custom expr: user writes Re and Im parts separated by comma e.g. "re*re-im*im, 2*re*im"
+    if(expr.includes(',')){
+      const ci=expr.indexOf(',');
+      const exRe=expr.slice(0,ci),exIm=expr.slice(ci+1);
+      return{re:safeEval2(exRe.trim(),re,im),
+             im:safeEval2(exIm.trim(),re,im)};
+    }
+    return z;
+  }catch{return z;}
+}
+const cmul=(a,b)=>({re:a.re*b.re-a.im*b.im,im:a.re*b.im+a.im*b.re});
+const csin=(z)=>({re:Math.sin(z.re)*Math.cosh(z.im),im:Math.cos(z.re)*Math.sinh(z.im)});
+const ccos=(z)=>({re:Math.cos(z.re)*Math.cosh(z.im),im:-Math.sin(z.re)*Math.sinh(z.im)});
+const cexp=(z)=>({re:Math.exp(z.re)*Math.cos(z.im),im:Math.exp(z.re)*Math.sin(z.im)});
+const cinv=(z)=>{const d=z.re*z.re+z.im*z.im||1e-10;return{re:z.re/d,im:-z.im/d};};
+
+function buildComplex(){
+  clearScene();addObj(makeAxes(3.5));
+  const gridH=makeGrid(3.5,14);gridH.position.y=-2;addObj(gridH);
+  const res=cxRes,r=3,geo=new THREE.BufferGeometry();
+  const verts=[],cols=[],idxs=[];
+  for(let i=0;i<=res;i++) for(let j=0;j<=res;j++){
+    const re=-r+2*r*(i/res),im=-r+2*r*(j/res);
+    const w=complexEval(cxFnExpr,re,im);
+    const height=Math.max(-2,Math.min(2,w.re));
+    const hue=(Math.atan2(w.im,w.re)+Math.PI)/(2*Math.PI);
+    const mod=Math.sqrt(w.re*w.re+w.im*w.im);
+    const c=hsvToRgb(hue,.7,Math.min(1,.3+.5*Math.log1p(mod)));
+    verts.push(re,height,im);cols.push(c.r,c.g,c.b);
+  }
+  for(let i=0;i<res;i++) for(let j=0;j<res;j++){const a=i*(res+1)+j,b=a+1,c=a+(res+1),d=c+1;idxs.push(a,c,b,b,c,d);}
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+  geo.setIndex(idxs);geo.computeVertexNormals();
+  addObj(new THREE.Mesh(geo,new THREE.MeshPhongMaterial({vertexColors:true,side:THREE.DoubleSide,shininess:60,transparent:true,opacity:.93})));
+  addObj(new THREE.Mesh(geo.clone(),new THREE.MeshBasicMaterial({wireframe:true,transparent:true,opacity:.06,color:0xffffff})));
+}
+
+// ══════════════════════════════════════════════════════════
+//  MODE: Parametric surfaces
+// ══════════════════════════════════════════════════════════
+const surfDefs={
+  torus:   (u,v,p)=>{const R=p.R,r=p.r;return{x:(R+r*Math.cos(v*Math.PI*2))*Math.cos(u*Math.PI*2),y:r*Math.sin(v*Math.PI*2),z:(R+r*Math.cos(v*Math.PI*2))*Math.sin(u*Math.PI*2)};},
+  sphere:  (u,v)=>({x:Math.sin(v*Math.PI)*Math.cos(u*Math.PI*2)*2,y:Math.cos(v*Math.PI)*2,z:Math.sin(v*Math.PI)*Math.sin(u*Math.PI*2)*2}),
+  klein:   (u,v)=>{u*=Math.PI*2;v*=Math.PI*2;const a=2.5;if(u<Math.PI){const x=a*(1-Math.cos(u)/2)*Math.cos(u)*(1+Math.sin(u))+a*Math.cos(u)*Math.cos(v)*(1-Math.cos(u)/2);const y=a*Math.sin(u)*(1-Math.cos(u)/2);const z=a*Math.sin(v)*(1-Math.cos(u)/2);return{x:3*Math.cos(u)*(1+Math.sin(u))+2*(1-Math.cos(u)/2)*Math.cos(u)*Math.cos(v),y:8*Math.sin(u)+2*(1-Math.cos(u)/2)*Math.sin(u)*Math.cos(v),z:2*(1-Math.cos(u)/2)*Math.sin(v)};}return{x:3*Math.cos(u)*(1+Math.sin(u))-2*(1-Math.cos(u)/2)*Math.cos(v),y:8*Math.sin(u),z:2*(1-Math.cos(u)/2)*Math.sin(v)};},
+  mobius:  (u,v)=>{u*=2*Math.PI;v=v*2-1;const s=1+v/2*Math.cos(u/2);return{x:s*Math.cos(u),y:v/2*Math.sin(u/2),z:s*Math.sin(u)};},
+  helicoid:(u,v)=>{u=u*4*Math.PI-2*Math.PI;v=v*4-2;return{x:v*Math.cos(u),y:u*.4,z:v*Math.sin(u)};},
+  catenoid:(u,v)=>{u=u*2*Math.PI;v=v*4-2;return{x:Math.cosh(v)*Math.cos(u)*1.2,y:v*1.2,z:Math.cosh(v)*Math.sin(u)*1.2};},
+  enneper: (u,v)=>{u=u*2-1;v=v*2-1;return{x:u-u*u*u/3+u*v*v,y:v-v*v*v/3+v*u*u,z:u*u-v*v};},
+  boy:     (u,v)=>{u*=Math.PI;v*=Math.PI*2;const cu=Math.cos(u),su=Math.sin(u),cv=Math.cos(v),sv=Math.sin(v),c2v=Math.cos(2*v),s2v=Math.sin(2*v),s3v=Math.sin(3*v),c3v=Math.cos(3*v);const d=2-Math.sqrt(2)*su*s3v||1e-10;const x=su*(sv*cu-Math.sqrt(2)*c2v*su)/d;const y=su*(cv*cu+Math.sqrt(2)*s2v*su)/d;const z=(3*cu*cu)/(2*d)-1;return{x:x*3,y:z*3,z:y*3};},
+};
+function buildParametric(){
+  clearScene();addObj(makeAxes(3.5));const g2=makeGrid(4,16);g2.position.y=-3;addObj(g2);
+  const res=surfParam.res,geo=new THREE.BufferGeometry(),verts=[],cols=[],idxs=[],pts=[];
+  const fn=surfUseCustom
+    ?(u,v)=>({x:safeEval2uv(surfCustomX,u,v),y:safeEval2uv(surfCustomY,u,v),z:safeEval2uv(surfCustomZ,u,v)})
+    :surfDefs[surfType]||surfDefs.torus;
+  let minY=Infinity,maxY=-Infinity;
+  for(let i=0;i<=res;i++) for(let j=0;j<=res;j++){const p=fn(i/res,j/res,surfParam);const px=isFinite(p.x)?p.x:0,py=isFinite(p.y)?p.y:0,pz=isFinite(p.z)?p.z:0;pts.push({x:px,y:py,z:pz});minY=Math.min(minY,py);maxY=Math.max(maxY,py);}
+  pts.forEach(p=>{verts.push(p.x,p.y,p.z);const c=heightColor(p.y,minY,maxY,'violet');cols.push(c.r,c.g,c.b);});
+  for(let i=0;i<res;i++) for(let j=0;j<res;j++){const a=i*(res+1)+j,b=a+1,c=a+(res+1),d=c+1;idxs.push(a,c,b,b,c,d);}
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+  geo.setIndex(idxs);geo.computeVertexNormals();
+  addObj(new THREE.Mesh(geo,new THREE.MeshPhongMaterial({vertexColors:true,side:THREE.DoubleSide,shininess:100,transparent:true,opacity:.9})));
+  addObj(new THREE.Mesh(geo.clone(),new THREE.MeshBasicMaterial({wireframe:true,transparent:true,opacity:.07,color:0xffffff})));
+}
+
+// ══════════════════════════════════════════════════════════
+//  MODE: Space curves
+// ══════════════════════════════════════════════════════════
+const curveDefs={
+  helix:     t=>({x:Math.cos(t*8)*2,y:t*3-1.5,z:Math.sin(t*8)*2}),
+  trefoil:   t=>({x:Math.sin(t)+2*Math.sin(2*t),y:Math.cos(t)-2*Math.cos(2*t),z:-Math.sin(3*t)}),
+  lissajous: t=>({x:Math.sin(3*t+Math.PI/4)*2.5,y:Math.sin(2*t)*2.5,z:Math.sin(t)*2.5*.5}),
+  torus_knot:t=>({x:(2+Math.cos(3*t))*Math.cos(2*t)*1.5,y:(2+Math.cos(3*t))*Math.sin(2*t)*1.5,z:Math.sin(3*t)*1.5}),
+  viviani:   t=>({x:1+Math.cos(t),y:Math.sin(t),z:2*Math.sin(t/2)}),
+  epicycloid:t=>({x:(3+1)*Math.cos(t)-Math.cos((3+1)*t),y:(3+1)*Math.sin(t)-Math.sin((3+1)*t),z:Math.sin(t*2)*.5}),
+  figure8:   t=>({x:(2+Math.cos(2*t))*Math.cos(3*t)/2,y:(2+Math.cos(2*t))*Math.sin(3*t)/2,z:Math.sin(4*t)/2}),
+  cinquefoil:t=>({x:(2+Math.cos(2.5*t))*Math.cos(t)*1.4,y:(2+Math.cos(2.5*t))*Math.sin(t)*1.4,z:Math.sin(2.5*t)*1.4}),
+};
+function buildCurves(){
+  clearScene();addObj(makeAxes(4));const g3=makeGrid(4,16);g3.position.y=-3;addObj(g3);
+  const fn=curveUseCustom
+    ?(t)=>({x:safeEval1(curveCustomX,t),y:safeEval1(curveCustomY,t),z:safeEval1(curveCustomZ,t)})
+    :curveDefs[curveType]||curveDefs.helix;
+  const N=1200,pts=[];
+  for(let i=0;i<=N;i++){const t=(i/N)*Math.PI*2;const p=fn(t);const px=isFinite(p.x)?p.x:0,py=isFinite(p.y)?p.y:0,pz=isFinite(p.z)?p.z:0;pts.push(new THREE.Vector3(px,py,pz));}
+  const curve=new THREE.CatmullRomCurve3(pts.slice(0,-1));
+  const closedCurves=new Set(['trefoil','torus_knot','epicycloid','figure8','cinquefoil']);
+  const isClosed=curveUseCustom?false:closedCurves.has(curveType);
+  const tgeo=new THREE.TubeGeometry(curve,900,.04,8,isClosed);
+  const cols2=[],pos=tgeo.attributes.position;
+  for(let k=0;k<pos.count;k++){const t2=k/pos.count;const cc=hsvToRgb(graphHue/360,.85,0.4+t2*0.6);cols2.push(cc.r,cc.g,cc.b);}
+  tgeo.setAttribute('color',new THREE.Float32BufferAttribute(cols2,3));
+  addObj(new THREE.Mesh(tgeo,new THREE.MeshPhongMaterial({vertexColors:true,shininess:120})));
+  // ghost all others
+  Object.entries(curveDefs).forEach(([name,fn2],ci)=>{
+    if(name===curveType) return;
+    const p2=[];for(let i=0;i<=300;i++){const t=(i/300)*Math.PI*2;const p=fn2(t);p2.push(new THREE.Vector3(p.x,p.y,p.z));}
+    const geo=new THREE.BufferGeometry().setFromPoints(p2);
+    const c=hsvToRgb(graphHue/360,.3,.15);
+    addObj(new THREE.Line(geo,new THREE.LineBasicMaterial({color:c,transparent:true,opacity:.18})));
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+//  MODE: Vector field
+// ══════════════════════════════════════════════════════════
+const vecPresets={
+  rotation: {x:'y',y:'-x',z:'0'},
+  curl:     {x:'-y*z',y:'x*z',z:'0'},
+  sink:     {x:'-x',y:'-y',z:'-z'},
+  source:   {x:'x',y:'y',z:'z'},
+  saddle:   {x:'x',y:'-y',z:'0'},
+  tornado:  {x:'-y+x*0.1',y:'x+y*0.1',z:'-z*0.5'},
+};
+function buildVectorField(){
+  clearScene();addObj(makeAxes(3));addObj(makeGrid(4,16));
+  const res=vecRes,r=3,step=r*2/res;
+  const exprX=vecExprX,exprY=vecExprY,exprZ=vecExprZ;
+  for(let i=0;i<=res;i++) for(let j=0;j<=res;j++) for(let k=0;k<=res;k++){
+    const x=-r+i*step,y=-r+j*step,z=-r+k*step;
+    let fx=safeEval3(exprX,x,y,z)||0;
+    let fy=safeEval3(exprY,x,y,z)||0;
+    let fz=safeEval3(exprZ,x,y,z)||0;
+    const len=Math.sqrt(fx*fx+fy*fy+fz*fz);
+    if(len<1e-10) continue;
+    const scale=Math.min(len,2)*0.35;
+    fx/=len;fy/=len;fz/=len;
+    const dir=new THREE.Vector3(fx,fy,fz);
+    const origin=new THREE.Vector3(x,y,z);
+    const geo=new THREE.BufferGeometry().setFromPoints([origin,origin.clone().addScaledVector(dir,scale)]);
+    const c=hsvToRgb(graphHue/360,0.8,0.4+Math.min(len,2)*0.3);
+    addObj(new THREE.Line(geo,new THREE.LineBasicMaterial({color:c,transparent:true,opacity:.7})));
+    // arrowhead cone
+    const cone=new THREE.ConeGeometry(0.025,0.08,4);
+    const cmesh=new THREE.Mesh(cone,new THREE.MeshBasicMaterial({color:c}));
+    const tip=origin.clone().addScaledVector(dir,scale);
+    cmesh.position.copy(tip);
+    cmesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+    addObj(cmesh);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  MODE: ODE / Lorenz attractor
+// ══════════════════════════════════════════════════════════
+const odeSystems={
+  lorenz:{
+    label:'Lorenz Attractor',sigma:10,rho:28,beta:8/3,
+    step(s,x,y,z){const dt=0.005;const dx=s.sigma*(y-x),dy=x*(s.rho-z)-y,dz=x*y-s.beta*z;return[x+dx*dt,y+dy*dt,z+dz*dt];}
+  },
+  rossler:{
+    label:'Rössler Attractor',a:.2,b:.2,c:5.7,
+    step(s,x,y,z){const dt=0.007;const dx=-(y+z),dy=x+s.a*y,dz=s.b+z*(x-s.c);return[x+dx*dt,y+dy*dt,z+dz*dt];}
+  },
+  duffing:{
+    label:'Duffing Oscillator',alpha:1,beta:-1,delta:.3,gamma:.5,omega:1.2,
+    step(s,x,y,z){const dt=0.02;const dx=y,dy=x*(s.alpha-s.beta*x*x)-s.delta*y+s.gamma*Math.cos(s.omega*z),dz=1;return[x+dx*dt,y+dy*dt,z+dz*dt];}
+  },
+  thomas:{
+    label:"Thomas' Cyclically Symmetric",b:.19,
+    step(s,x,y,z){const dt=0.05;const dx=Math.sin(y)-s.b*x,dy=Math.sin(z)-s.b*y,dz=Math.sin(x)-s.b*z;return[x+dx*dt,y+dy*dt,z+dz*dt];}
+  },
+};
+function buildODE(){
+  clearScene();addObj(makeAxes(3));
+  const sys=odeUseCustom
+    ?{label:'Custom',dt:odeCustomDT,step(s,x,y,z){const dt=s.dt;const dx=safeEval3(odeCustomDX,x,y,z),dy=safeEval3(odeCustomDY,x,y,z),dz=safeEval3(odeCustomDZ,x,y,z);return[x+dx*dt,y+dy*dt,z+dz*dt];}}
+    :odeSystems[odeType]||odeSystems.lorenz;
+  const TRAJ=odeN;
+  for(let t=0;t<TRAJ;t++){
+    let [x,y,z]=[Math.random()*.02-.01,Math.random()*.02-.01+0.1,Math.random()*.02+0.01];
+    const pts=[];const STEPS=8000;
+    for(let i=0;i<STEPS;i++){
+      [x,y,z]=sys.step(sys,x,y,z);
+      if(!isFinite(x)||!isFinite(y)||!isFinite(z)) break;
+      if(i>200) pts.push(new THREE.Vector3(x*.15,y*.15-1,z*.15-1));
+    }
+    if(pts.length<2) continue;
+    const geo=new THREE.BufferGeometry().setFromPoints(pts);
+    const cols=new Float32Array(pts.length*3);
+    for(let i=0;i<pts.length;i++){const c=hsvToRgb(graphHue/360,.8,0.3+i/pts.length*0.65);cols[i*3]=c.r;cols[i*3+1]=c.g;cols[i*3+2]=c.b;}
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+    addObj(new THREE.Line(geo,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.6})));
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  MODE: Fractal surfaces (Mandelbrot/Julia height map)
+// ══════════════════════════════════════════════════════════
+const fracDefs={
+  mandelbrot:{
+    label:'Mandelbrot Height',
+    iter(cx,cy,max){let x=0,y=0,i=0;while(x*x+y*y<4&&i<max){const tx=x*x-y*y+cx;y=2*x*y+cy;x=tx;i++;}return i;},
+    range:[-2.2,0.8,-1.4,1.4],
+  },
+  burning_ship:{
+    label:'Burning Ship',
+    iter(cx,cy,max){let x=0,y=0,i=0;while(x*x+y*y<4&&i<max){const tx=x*x-y*y+cx;y=2*Math.abs(x)*Math.abs(y)+cy;x=tx;i++;}return i;},
+    range:[-2.2,1.6,-2,0.5],
+  },
+  julia1:{
+    label:'Julia c=−0.7+0.27i',
+    iter(cx,cy,max){let x=cx,y=cy,i=0;while(x*x+y*y<4&&i<max){const tx=x*x-y*y-0.7;y=2*x*y+0.27;x=tx;i++;}return i;},
+    range:[-1.6,1.6,-1.6,1.6],
+  },
+  julia2:{
+    label:'Julia c=−0.4+0.6i',
+    iter(cx,cy,max){let x=cx,y=cy,i=0;while(x*x+y*y<4&&i<max){const tx=x*x-y*y-0.4;y=2*x*y+0.6;x=tx;i++;}return i;},
+    range:[-1.5,1.5,-1.5,1.5],
+  },
+  newton:{
+    label:'Newton z³−1',
+    iter(cx,cy,max){let x=cx,y=cy,i=0;while(i<max){const d=3*((x*x-y*y)*(x*x-y*y)+4*x*x*y*y)||1e-10;const nx=x-(x*x*x-3*x*y*y-1)*(3*(x*x-y*y))/d+(6*x*y*(3*x*x*y-y*y*y))/d;const ny=y-(3*x*x*y-y*y*y)*(3*(x*x-y*y))/d-(x*x*x-3*x*y*y-1)*6*x*y/d;if(Math.hypot(nx-x,ny-y)<1e-5) break;x=nx;y=ny;i++;}return i;},
+    range:[-2,2,-2,2],
+  },
+};
+function buildFractal(){
+  clearScene();addObj(makeAxes(2.5));
+  const fd=fracDefs[fracType]||fracDefs.mandelbrot;
+  const res=80,max=fracIter;
+  const [x0,x1,y0,y1]=fd.range;
+  const verts=[],cols=[],idxs=[];
+  let minH=Infinity,maxH=-Infinity;
+  const heights=[];
+  for(let i=0;i<=res;i++) for(let j=0;j<=res;j++){
+    const cx=x0+(x1-x0)*(i/res),cy=y0+(y1-y0)*(j/res);
+    const it=fd.iter(cx,cy,max);
+    const h=(it/max)*2-1;
+    heights.push(h);minH=Math.min(minH,h);maxH=Math.max(maxH,h);
+  }
+  for(let i=0;i<=res;i++) for(let j=0;j<=res;j++){
+    const cx=x0+(x1-x0)*(i/res),cy=y0+(y1-y0)*(j/res);
+    const h=heights[i*(res+1)+j];
+    verts.push(cx*1.5,h*1.5,cy*1.5);
+    const c=heightColor(h,minH,maxH,'neon');cols.push(c.r,c.g,c.b);
+  }
+  for(let i=0;i<res;i++) for(let j=0;j<res;j++){const a=i*(res+1)+j,b=a+1,c=a+(res+1),d=c+1;idxs.push(a,c,b,b,c,d);}
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+  geo.setIndex(idxs);geo.computeVertexNormals();
+  addObj(new THREE.Mesh(geo,new THREE.MeshPhongMaterial({vertexColors:true,side:THREE.DoubleSide,shininess:60,transparent:true,opacity:.95})));
+  addObj(new THREE.Mesh(geo.clone(),new THREE.MeshBasicMaterial({wireframe:true,transparent:true,opacity:.05,color:0xffffff})));
+}
+
+// ══════════════════════════════════════════════════════════
+//  Raycasting & Point Inspector
+// ══════════════════════════════════════════════════════════
+const raycaster=new THREE.Raycaster();
+const mNDC=new THREE.Vector2();
+let hitPt=null;
+let _mouseMoved=false;
+function updateMouse(cx,cy){
+  const rect=renderer.domElement.getBoundingClientRect();
+  mNDC.x=((cx-rect.left)/rect.width)*2-1;
+  mNDC.y=-((cy-rect.top)/rect.height)*2+1;
+  _mouseMoved=true;
+}
+function raycast(){
+  raycaster.setFromCamera(mNDC,camera);
+  const hits=raycaster.intersectObjects(currentObjs.filter(o=>o.isMesh),true);
+  hitPt=hits.length?hits[0].point:null;
+  const el=document.getElementById('coords');
+  if(hitPt){
+    el.classList.remove('empty');
+    const p=hitPt;
+    if(mode==='cx'){
+      const arg=Math.atan2(p.z,p.x)*180/Math.PI;
+      el.innerHTML=`<span class="lbl">Re</span> ${p.x.toFixed(3)}<br><span class="lbl">Im</span> ${p.z.toFixed(3)}<br><span class="lbl">f(Re)</span> ${p.y.toFixed(3)}<br><span class="lbl">arg</span> ${arg.toFixed(1)}°`;
+    } else {
+      el.innerHTML=`<span class="lbl">x</span> ${p.x.toFixed(3)}<br><span class="lbl">y</span> ${p.y.toFixed(3)}<br><span class="lbl">z</span> ${p.z.toFixed(3)}`;
+    }
+  } else {
+    el.classList.add('empty');el.innerHTML='—';
+  }
+}
+function showInspector(cx,cy){
+  if(!hitPt) return;
+  const insp=document.getElementById('inspector');
+  const p=hitPt;
+  let html='';
+  if(mode==='fn'){
+    const fx=safeEval2(fnExpr,p.x,p.z,timeVal);
+    html=`<b style="color:var(--fn)">Point</b><br><span class="lbl">x</span> ${p.x.toFixed(4)}<br><span class="lbl">y</span> ${p.z.toFixed(4)}<br><span class="lbl">f(x,y)</span> <b>${fx.toFixed(4)}</b>`;
+  } else if(mode==='cx'){
+    const w=complexEval(cxFnExpr,p.x,p.z);
+    html=`<b style="color:var(--cx)">z = ${p.x.toFixed(3)}+${p.z.toFixed(3)}i</b><br><span class="lbl">Re(f)</span> ${w.re.toFixed(4)}<br><span class="lbl">Im(f)</span> ${w.im.toFixed(4)}<br><span class="lbl">|f|</span> ${Math.hypot(w.re,w.im).toFixed(4)}<br><span class="lbl">arg</span> ${(Math.atan2(w.im,w.re)*180/Math.PI).toFixed(2)}°`;
+  } else {
+    html=`<b style="color:var(--real)">Point</b><br><span class="lbl">x</span> ${p.x.toFixed(4)}<br><span class="lbl">y</span> ${p.y.toFixed(4)}<br><span class="lbl">z</span> ${p.z.toFixed(4)}<br><span class="lbl">r</span> ${p.length().toFixed(4)}`;
+  }
+  insp.innerHTML=html;
+  insp.style.left='0';insp.style.top='-9999px';insp.classList.add('visible');
+  const iw=insp.offsetWidth||180;
+  const clampedX=Math.min(cx+14, window.innerWidth-iw-8);
+  const clampedY=Math.max(8, cy-10);
+  insp.style.left=clampedX+'px';insp.style.top=clampedY+'px';
+  clearTimeout(insp._t);insp._t=setTimeout(()=>insp.classList.remove('visible'),3000);
+}
+
+// ══════════════════════════════════════════════════════════
+//  Panel builder
+// ══════════════════════════════════════════════════════════
+// single color — no theme switcher
+
+function colorPickerSec(){
+  const bg='hsl('+graphHue+',90%,50%)';
+  return `<div class="sec">
+    <div class="sec-label">Graph Color</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+      <div style="flex:1;position:relative;height:20px">
+        <div style="position:absolute;inset:0;border-radius:10px;background:linear-gradient(to right,hsl(0,90%,50%),hsl(30,90%,50%),hsl(60,90%,50%),hsl(120,90%,50%),hsl(180,90%,50%),hsl(240,90%,50%),hsl(300,90%,50%),hsl(360,90%,50%));pointer-events:none"></div>
+        <input type="range" min="0" max="360" value="${graphHue}"
+          style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;margin:0"
+          oninput="graphHue=+this.value;var p=this.parentNode;p.querySelector('.gh-knob').style.left=(graphHue/360*100)+'%';p.querySelector('.gh-knob').style.background='hsl('+graphHue+',90%,50%)';p.parentNode.querySelector('.gh-swatch').style.background='hsl('+graphHue+',90%,50%)';rebuild()">
+        <div class="gh-knob" style="position:absolute;top:50%;left:${graphHue/360*100}%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:${bg};border:2px solid #fff;box-shadow:0 0 6px rgba(0,0,0,.5);pointer-events:none"></div>
+      </div>
+      <div class="gh-swatch" style="width:24px;height:24px;border-radius:5px;flex-shrink:0;background:${bg};border:1px solid rgba(255,255,255,.15)"></div>
+    </div>
+  </div>`;
+}
+
+function buildPanel(){
+  const p=document.getElementById('panel');
+  const sb=`
+    <div class="sec">
+      <div class="sec-label">History</div>
+      <div id="hist-list"></div>
+    </div>`;
+  const sec=(lbl,body)=>`<div class="sec"><div class="sec-label">${lbl}</div>${body}</div>`;
+  const field=(lbl,val,inp)=>`<div class="field"><div class="field-label"><span>${lbl}</span>${val?`<span class="val">${val}</span>`:''}</div>${inp}</div>`;
+
+  if(mode==='fn'){
+    p.innerHTML=
+      sec('Surface f(x,y)','<p>Height = f(x,y,t). Use <code style="color:var(--fn);font-family:var(--mono)">t</code> for animation via the clock button</p>')+
+      sec('Expression',`<input type="text" id="fnInp" value="${fnExpr}" placeholder="sin(sqrt(x*x+y*y))"><div class="chips" style="margin-top:10px">${['sin(sqrt(x*x+y*y))','cos(x)*sin(y)','x*x-y*y','sin(x*y)','sin(x*t)*cos(y*t)','(x*x+y*y)*sin(1/(x*x+y*y+.01))','floor(x)+floor(y)','sin(x+t)+cos(y+t)'].map(e=>`<span class="chip${fnExpr===e?' active':''}" data-expr="${e}" onclick="fnExpr=this.dataset.expr;document.getElementById('fnInp').value=fnExpr;rebuild()">${e}</span>`).join('')}</div>`)+
+
+      colorPickerSec()+
+      sec('Settings',
+        field('Resolution',''+fnRes,`<input type="range" min="15" max="100" value="${fnRes}" oninput="fnRes=+this.value;this.closest('.field').querySelector('.val').textContent=fnRes;debouncedRebuild()">`)+
+        field('Range','±'+fnRange,`<input type="range" min="1" max="8" step=".5" value="${fnRange}" oninput="fnRange=+this.value;this.closest('.field').querySelector('.val').textContent='±'+fnRange;debouncedRebuild()">`)+
+        `<label class="check-row"><input type="checkbox" ${fnWireframe?'checked':''} onchange="fnWireframe=this.checked;rebuild()"><span>Wireframe overlay</span></label>`
+      )+sb;
+    document.getElementById('fnInp').addEventListener('input',e=>{fnExpr=e.target.value;pushHistory(fnExpr);rebuild();});
+  }
+  else if(mode==='cx'){
+    p.innerHTML=
+      sec('ℂ Complex Mapping','<p>Domain colouring in 3D. Height = Re(f(z)), hue = arg(f(z)).</p>')+
+      sec('f(z)',`<div class="chips">${['z*z','z*z*z','z*z-1','z^3-1','z^4-1','sin(z)','cos(z)','tan(z)','exp(z)','1/z'].map(e=>`<span class="chip${cxFnExpr===e&&!cxUseCustom?' active':''}" onclick="cxFnExpr='${e}';cxUseCustom=false;rebuild();buildPanel()">${e}</span>`).join('')}</div>`)+
+      sec('Resolution',field('Grid',''+cxRes+'×'+cxRes,`<input type="range" min="20" max="100" value="${cxRes}" oninput="cxRes=+this.value;this.closest('.field').querySelector('.val').textContent=cxRes+'×'+cxRes;debouncedRebuild()">`))+
+      sec('Custom f(z)',`<p style="margin-bottom:8px">Variables: <code style="color:var(--fn);font-family:var(--mono)">re</code>, <code style="color:var(--fn);font-family:var(--mono)">im</code>. Enter Re, Im separated by comma.</p>`+
+        field('Re(f), Im(f)','',`<input type="text" id="cxCustomInp" value="${cxCustomExpr}" placeholder="re*re-im*im, 2*re*im" oninput="cxCustomExpr=this.value;if(cxUseCustom){cxFnExpr=this.value;debouncedRebuild()}">`)+
+        `<span class="chip${cxUseCustom?' active':''}" onclick="cxUseCustom=!cxUseCustom;if(cxUseCustom){cxFnExpr=document.getElementById('cxCustomInp').value;}rebuild();buildPanel()">Use custom</span>`)+
+      sec('Legend',`<div class="legend"><span class="legend-dot" style="background:#ff6060"></span>arg ≈ 0 &nbsp;<span class="legend-dot" style="background:#60ff60"></span>2π/3<br><span class="legend-dot" style="background:#6060ff"></span>4π/3 &nbsp; brightness = |f(z)|<br>Height = Re(f(z))</div>`)+
+      sb;
+  }
+  else if(mode==='surf'){
+    const surfs=[['torus','Torus'],['sphere','Sphere'],['mobius','Möbius strip'],['helicoid','Helicoid'],['catenoid','Catenoid'],['klein','Klein bottle'],['enneper','Enneper surface'],['boy',"Boy's surface"]];
+    p.innerHTML=
+      sec('Parametric Surface','<p>(u,v) → (x,y,z). Topological surfaces impossible to draw in 2D.</p>')+
+      sec('Surface',surfs.map(([k,l])=>`<div class="list-item${surfType===k&&!surfUseCustom?' sel-surf':''}" onclick="surfType='${k}';surfUseCustom=false;rebuild();buildPanel()">${l}</div>`).join(''))+
+      sec('Resolution',field('Faces',''+surfParam.res+'×'+surfParam.res,`<input type="range" min="16" max="100" value="${surfParam.res}" oninput="surfParam.res=+this.value;this.closest('.field').querySelector('.val').textContent=surfParam.res+'×'+surfParam.res;debouncedRebuild()">`))+
+      colorPickerSec()+
+      sec('Custom Surface',`<p style="margin-bottom:8px">u, v ∈ [0,1]. All Math functions available.</p>`+
+        field('x(u,v)','',`<input type="text" value="${surfCustomX}" oninput="surfCustomX=this.value;if(surfUseCustom)debouncedRebuild()">`)+
+        field('y(u,v)','',`<input type="text" value="${surfCustomY}" oninput="surfCustomY=this.value;if(surfUseCustom)debouncedRebuild()">`)+
+        field('z(u,v)','',`<input type="text" value="${surfCustomZ}" oninput="surfCustomZ=this.value;if(surfUseCustom)debouncedRebuild()">`)+
+        `<span class="chip${surfUseCustom?' active':''}" onclick="surfUseCustom=!surfUseCustom;rebuild();buildPanel()">Use custom</span>`)+
+      sb;
+  }
+  else if(mode==='para'){
+    const labels={helix:'Helix',trefoil:'Trefoil knot',lissajous:'3D Lissajous',torus_knot:'Torus knot (2,3)',viviani:"Viviani's curve",epicycloid:'Epicycloid',figure8:'Figure-8 knot',cinquefoil:'Cinquefoil knot'};
+    const eqs={helix:'x = cos(8t) · 2\ny = t · 3 − π\nz = sin(8t) · 2',trefoil:'x = sin(t) + 2sin(2t)\ny = cos(t) − 2cos(2t)\nz = −sin(3t)',lissajous:'x = sin(3t + π/4) · 2.5\ny = sin(2t) · 2.5\nz = sin(t) · 1.25',torus_knot:'x = (2+cos3t)cos2t · 1.5\ny = (2+cos3t)sin2t · 1.5\nz = sin(3t) · 1.5',viviani:'x = 1 + cos(t)\ny = sin(t)\nz = 2 · sin(t/2)',epicycloid:'x = 4cos(t) − cos(4t)\ny = 4sin(t) − sin(4t)\nz = sin(2t) · 0.5',figure8:'x = (2+cos2t) · cos3t / 2\ny = (2+cos2t) · sin3t / 2\nz = sin(4t) / 2',cinquefoil:'x = (2+cos2.5t) · cos(t) · 1.4\ny = (2+cos2.5t) · sin(t) · 1.4\nz = sin(2.5t) · 1.4'};
+    p.innerHTML=
+      sec('Space Curves','<p>c(t) = (x, y, z) parameterised over t ∈ [0, 2π].</p>')+
+      sec('Curve',Object.entries(labels).map(([k,l])=>`<div class="list-item${curveType===k&&!curveUseCustom?' sel-para':''}" onclick="curveType='${k}';curveUseCustom=false;rebuild();buildPanel()">${l}</div>`).join(''))+
+      sec('Equations',`<div class="eq-block">${eqs[curveType]||''}</div>`)+
+      colorPickerSec()+
+      sec('Custom Curve',`<p style="margin-bottom:8px">t ∈ [0, 2π]. Use <code style="color:var(--fn);font-family:var(--mono)">PI</code> for π.</p>`+
+        field('x(t)','',`<input type="text" value="${curveCustomX}" oninput="curveCustomX=this.value;if(curveUseCustom)debouncedRebuild()">`)+
+        field('y(t)','',`<input type="text" value="${curveCustomY}" oninput="curveCustomY=this.value;if(curveUseCustom)debouncedRebuild()">`)+
+        field('z(t)','',`<input type="text" value="${curveCustomZ}" oninput="curveCustomZ=this.value;if(curveUseCustom)debouncedRebuild()">`)+
+        `<span class="chip${curveUseCustom?' active':''}" onclick="curveUseCustom=!curveUseCustom;rebuild();buildPanel()">Use custom</span>`)+
+      sb;
+  }
+  else if(mode==='vec'){
+    p.innerHTML=
+      sec('Vector Field','<p>F(x,y,z) = (Fx, Fy, Fz). Arrow length = magnitude.</p>')+
+      sec('Preset',Object.entries(vecPresets).map(([k,v])=>`<div class="list-item" onclick="vecExprX='${v.x}';vecExprY='${v.y}';vecExprZ='${v.z}';rebuild();buildPanel()">${k}</div>`).join(''))+
+      colorPickerSec()+
+      sec('Custom F(x,y,z)',
+        field('Fx','',`<input type="text" value="${vecExprX}" oninput="vecExprX=this.value;debouncedRebuild()">`)+
+        field('Fy','',`<input type="text" value="${vecExprY}" oninput="vecExprY=this.value;debouncedRebuild()">`)+
+        field('Fz','',`<input type="text" value="${vecExprZ}" oninput="vecExprZ=this.value;debouncedRebuild()">`)+
+        field('Grid density',''+vecRes,`<input type="range" min="3" max="10" value="${vecRes}" oninput="vecRes=+this.value;this.closest('.field').querySelector('.val').textContent=vecRes;debouncedRebuild()">`)
+      )+sb;
+  }
+  else if(mode==='ode'){
+    p.innerHTML=
+      sec('ODE Attractors','<p>Trajectories of chaotic dynamical systems. Each line = unique initial condition.</p>')+
+      sec('System',Object.entries(odeSystems).map(([k,v])=>`<div class="list-item${odeType===k&&!odeUseCustom?' sel-ode':''}" onclick="odeType='${k}';odeUseCustom=false;rebuild();buildPanel()">${v.label}</div>`).join(''))+
+      colorPickerSec()+
+      sec('Settings',field('Trajectories',''+odeN,`<input type="range" min="1" max="40" value="${odeN}" oninput="odeN=+this.value;this.closest('.field').querySelector('.val').textContent=odeN;debouncedRebuild()">`))+
+      sec('Custom ODE',`<p style="margin-bottom:8px">Variables: <code style="color:var(--fn);font-family:var(--mono)">x, y, z</code>. Euler integration.</p>`+
+        field('dx/dt','',`<input type="text" value="${odeCustomDX}" oninput="odeCustomDX=this.value;if(odeUseCustom)debouncedRebuild()">`)+
+        field('dy/dt','',`<input type="text" value="${odeCustomDY}" oninput="odeCustomDY=this.value;if(odeUseCustom)debouncedRebuild()">`)+
+        field('dz/dt','',`<input type="text" value="${odeCustomDZ}" oninput="odeCustomDZ=this.value;if(odeUseCustom)debouncedRebuild()">`)+
+        field('Step dt',''+odeCustomDT.toFixed(3),`<input type="range" min="0.001" max="0.05" step="0.001" value="${odeCustomDT}" oninput="odeCustomDT=+this.value;this.closest('.field').querySelector('.val').textContent=odeCustomDT.toFixed(3);if(odeUseCustom)debouncedRebuild()">`)+
+        `<span class="chip${odeUseCustom?' active':''}" onclick="odeUseCustom=!odeUseCustom;rebuild();buildPanel()">Use custom</span>`)+
+      sb;
+  }
+  else if(mode==='frac'){
+    p.innerHTML=
+      sec('Fractal Surfaces','<p>Escape-time iteration count mapped to height. Order and chaos in 3D.</p>')+
+      sec('Type',Object.entries(fracDefs).map(([k,v])=>`<div class="list-item${fracType===k?' sel-frac':''}" onclick="fracType='${k}';rebuild();buildPanel()">${v.label}</div>`).join(''))+
+      colorPickerSec()+
+      sec('Iterations',field('Max iterations',''+fracIter,`<input type="range" min="20" max="200" value="${fracIter}" oninput="fracIter=+this.value;this.closest('.field').querySelector('.val').textContent=fracIter;debouncedRebuild()">`))+
+      sb;
+  }
+  refreshHistoryUI();
+}
+
+// ══════════════════════════════════════════════════════════
+//  Rebuild & setMode
+// ══════════════════════════════════════════════════════════
+function rebuild(){
+  if(mode==='fn')   buildFnSurface();
+  if(mode==='cx')   buildComplex();
+  if(mode==='surf') buildParametric();
+  if(mode==='para') buildCurves();
+  if(mode==='vec')  buildVectorField();
+  if(mode==='ode')  buildODE();
+  if(mode==='frac') buildFractal();
+  if(slicerEnabled) buildSlicerPlane();
+}
+function setMode(m){
+  const VALID=['fn','cx','surf','para','vec','ode','frac'];
+  if(!VALID.includes(m)) return;
+  mode=m;
+  VALID.forEach(k=>{
+    document.getElementById('tab-'+k).className='tab'+(k===m?' on-'+m:'');
+  });
+  orbit.tx=0;orbit.ty=0;orbit.tz=0;
+  if(m==='fn')   {orbit.theta=Math.PI/5;orbit.phi=Math.PI/3.5;orbit.r=9;}
+  if(m==='cx')   {orbit.theta=Math.PI/4;orbit.phi=Math.PI/4;orbit.r=10;}
+  if(m==='surf') {orbit.theta=Math.PI*.3;orbit.phi=Math.PI/3;orbit.r=8;}
+  if(m==='para') {orbit.theta=Math.PI/6;orbit.phi=Math.PI/3;orbit.r=10;}
+  if(m==='vec')  {orbit.theta=Math.PI/4;orbit.phi=Math.PI/4;orbit.r=12;}
+  if(m==='ode')  {orbit.theta=Math.PI/3;orbit.phi=Math.PI/3.5;orbit.r=14;}
+  if(m==='frac') {orbit.theta=Math.PI/5;orbit.phi=Math.PI/3.5;orbit.r=9;}
+  buildPanel();rebuild();
+  updateShareURL();
+}
+function updateShareURL(){
+  // silently update URL bar without full reload
+  try{
+    const params={mode};
+    if(mode==='fn') params.expr=fnExpr;
+    history.replaceState({},'',location.pathname+'?'+new URLSearchParams(params));
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════════════════════
+//  Animate
+// ══════════════════════════════════════════════════════════
+let _autoRotate=true;
+function animate(){
+  requestAnimationFrame(animate);
+  if(!orbit.dragging&&!orbit.rDragging&&_autoRotate) orbit.theta+=.0008;
+  if(timePlaying){
+    timeVal=(timeVal+0.015)%(Math.PI*2);
+    const sl=document.getElementById('time-slider');
+    const tv=document.getElementById('t-val');
+    if(sl) sl.value=timeVal;
+    if(tv) tv.textContent='t='+timeVal.toFixed(2);
+    if(mode==='fn') updateFnSurfacePositions();
+  }
+  updateCamera();if(_mouseMoved){raycast();_mouseMoved=false;}
+  renderer.render(scene,camera);
+}
+
+// ══════════════════════════════════════════════════════════
+//  Responsive sizing
+// ══════════════════════════════════════════════════════════
+function isMobile(){return window.innerWidth<=640;}
+function updateRendererSize(){
+  const mobile=isMobile();
+  const topbarH=mobile?48+42:52;
+  let rw,rh;
+  if(mobile){rw=window.innerWidth;rh=window.innerHeight-topbarH;}
+  else{rw=panelOpen?window.innerWidth-280:window.innerWidth;rh=window.innerHeight;}
+  renderer.setSize(rw,rh);
+  renderer.domElement.style.top=mobile?topbarH+'px':'0';
+  rendEl.style.top=mobile?topbarH+'px':'0';
+  rendEl.style.height=mobile?(window.innerHeight-topbarH)+'px':'100%';
+  camera.aspect=rw/(rh||1);camera.updateProjectionMatrix();
+}
+window.addEventListener('resize',updateRendererSize);
+
+let panelOpen=false;
+function togglePanel(){
+  panelOpen=!panelOpen;
+  const btn=document.getElementById('panel-toggle');
+  document.body.classList.toggle('panel-open',panelOpen);
+  if(isMobile()) btn.innerHTML=panelOpen?'×':'≡';
+  else btn.innerHTML=panelOpen?'›':'‹';
+  updateRendererSize();
+}
+
+let _rebuildTimer=null;
+function debouncedRebuild(){clearTimeout(_rebuildTimer);_rebuildTimer=setTimeout(rebuild,150);}
+
+// ── Range track fill ──
+document.addEventListener('input',e=>{
+  if(e.target.type==='range'){
+    const mn=+e.target.min||0,mx=+e.target.max||100,val=+e.target.value;
+    e.target.style.setProperty('--pct',((val-mn)/(mx-mn)*100)+'%');
+  }
+});
+
+// ── Bootstrap
+window.addEventListener('DOMContentLoaded',()=>{
+  loadFromURL();
+  if(!new URLSearchParams(location.search).get('mode')) setMode('fn');
+  updateRendererSize();
+  animate();
+});
+</script>
+</body>
+</html>
